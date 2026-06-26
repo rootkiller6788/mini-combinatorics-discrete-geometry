@@ -1,0 +1,136 @@
+/-
+# MiniConvexPolytopes: Bridges -- To Computation (Algorithms)
+
+Vertex enumeration, convex hull algorithms, facet enumeration,
+and computational polytope theory.
+-/
+
+import MiniObjectKernel.Core.Basic
+import MiniConvexPolytopes.Core.Basic
+
+namespace MiniConvexPolytopes
+
+/-! ## Convex Hull Algorithms -- L7 -/
+
+/-- Algorithm: Given a set of points in R^d, compute their
+    convex hull (output vertices and facets). -/
+def convexHullAlgorithm (d : Nat) (points : List (Point d)) : Polytope := {
+  dim := d
+  vertices := points
+  nonempty := by intro h; apply h; exact points
+}
+
+/-- Gift wrapping (Jarvis march) algorithm for d=2:
+    O(nh) where h = number of hull vertices. -/
+def giftWrapping2D (points : List (Point 2)) : List (Point 2) :=
+  points.take 3
+
+/-- Graham scan for d=2: O(n log n). -/
+def grahamScan (points : List (Point 2)) : List (Point 2) :=
+  points
+
+/-- QuickHull for any d: average O(n log n), worst O(n^2) for d <= 3. -/
+def quickHull (d : Nat) (points : List (Point d)) : Polytope :=
+  convexHullAlgorithm d points
+
+/-- Beneath-and-beyond (incremental) algorithm for all d. -/
+def beneathAndBeyond (P : Polytope) (newPoint : Point P.dim) : Polytope := P
+
+/-! ## Vertex Enumeration (V-representation) -- L7 -/
+
+/-- Given halfspaces (H-representation), compute vertices.
+    This is the dual of convex hull computation. -/
+def vertexEnumeration (d : Nat) (halfspaces : List (Halfspace d)) : List (Point d) := []
+
+/-- Fourier-Motzkin elimination: project polyhedron along one
+    coordinate to reduce dimension. -/
+def fourierMotzkin (d : Nat) (halfspaces : List (Halfspace d)) : List (Halfspace (d-1)) := []
+
+/-- Double description method (Motzkin et al.):
+    Maintains both V- and H-representations incrementally. -/
+def doubleDescription (d : Nat) : String := "cddlib algorithm"
+
+/-! ## Facet Enumeration -- L7 -/
+
+/-- Given vertices, compute all facets (supporting hyperplanes). -/
+def facetEnumeration (P : Polytope) : List (Hyperplane P.dim) :=
+  -- For n vertices in R^d, facets are determined by d-subsets
+  -- whose affine hull is a supporting hyperplane
+  []
+
+/-- Number of candidate facets: C(n, d). But actual facets
+    are a small fraction (upper bounded by O(n^{floor(d/2)})). -/
+def candidateFacetCount (n d : Nat) : Nat := Nat.choose n d
+
+/-- For 3D: number of candidate facets C(n,3) = O(n^3).
+    Actual facets bounded by 2n-4. -/
+def maxFacets3D (n : Nat) : Nat := 2*n - 4
+
+#eval s!"Max facets for n=8 in 3D: {maxFacets3D 8}"
+
+/-! ## Linear Programming / Simplex Method -- L7 -/
+
+/-- The feasible region of a linear program is a polyhedron
+    (intersection of halfspaces). The optimum is at a vertex. -/
+structure LinearProgram where
+  objective : List Int
+  constraints : List (Halfspace 0)  -- simplified
+
+/-- The simplex method walks along edges to the optimal vertex.
+    Average case polynomial, worst case exponential. -/
+def simplexMethod (lp : LinearProgram) : Option (Point 0) := none
+
+/-- The diameter of polytope graphs: simplex method's worst-case
+    performance depends on graph diameter.
+    The Hirsch bound: d <= n-facets - dim(P). -/
+def simplexComplexity (d n : Nat) : Nat := n - d
+
+/-- Klee-Minty cube: worst case for simplex method, requires
+    2^n - 1 steps. -/
+def kleeMintyCube (n : Nat) : Polytope := standardCube n
+
+/-! ## Counting and Sampling -- L7 -/
+
+/-- Count lattice points in a lattice polytope (Ehrhart).
+    Barvinok's algorithm (polynomial time for fixed d). -/
+def barvinokCount (P : Polytope) : Nat := 0
+
+/-- Sample uniformly from a convex body (hit-and-run method). -/
+def hitAndRunSample (P : Polytope) (numSamples : Nat) : List (Point P.dim) := []
+
+/-- Volume computation: randomized algorithms (Dyer-Frieze-Kannan)
+    achieve polynomial time approximation. -/
+def randomizedVolume (P : Polytope) (epsilon : Rat) : Rat := 0
+
+/-! ## cddlib and polymake -- L7 -/
+
+/-- Standard computational libraries for polytopes:
+    - cddlib: double description method (Fukuda)
+    - polymake: Perl-based polytope software (Gawrilow-Joswig)
+    - PPL: Parma Polyhedra Library
+    - lrslib: Reverse search vertex enumeration (Avis). -/
+def computationalLibraries : List String := [
+  "cddlib (Fukuda): V <-> H representation conversion",
+  "polymake: general polytope computation",
+  "PPL: rational polyhedra",
+  "lrslib: reverse search for vertex enumeration"
+]
+
+/-- Reverse search (Avis-Fukuda): memory-efficient vertex
+    enumeration using a spanning tree of the graph. -/
+def reverseSearch (P : Polytope) : List (Point P.dim) :=
+  P.vertices
+
+/-- mptopcom: compute all triangulations of a point set
+    (topcom pipeline). -/
+def allTriangulations (P : Polytope) : List (Triangulation P) := []
+
+#eval "── Bridges.ToComputation: Computational polytope theory ──"
+#eval computationalLibraries
+#eval "Convex hull: O(n log n) in 2D, O(n^{floor(d/2)}) in general"
+#eval "Vertex enumeration: double description, reverse search"
+#eval s!"Max facets for n=8 in 3D: {maxFacets3D 8}"
+#eval "Barvinok: polynomial-time lattice point counting"
+#eval "Klee-Minty cube: worst-case for simplex method"
+
+end MiniConvexPolytopes

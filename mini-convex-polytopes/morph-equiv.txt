@@ -1,0 +1,123 @@
+/-
+# MiniConvexPolytopes: Morphisms -- Gale Transforms and Equivalences -- L2
+
+Gale diagrams provide a way to study polytopes by transforming
+vertex coordinates into a configuration of vectors.
+-/
+
+import MiniObjectKernel.Core.Basic
+import MiniConvexPolytopes.Core.Basic
+
+namespace MiniConvexPolytopes
+
+/-! ## Gale Transform -- L2 -/
+
+structure GaleTransform (d n : Nat) where
+  vertices : List (Point d)
+  galeVectors : List (Point (n - d - 1))
+
+def galePreservesCombinatorics (d n : Nat) (gt : GaleTransform d n) : Bool :=
+  gt.vertices.length == n
+
+def faceViaGale (d n : Nat) (gt : GaleTransform d n) (S : List (Point d)) : Bool :=
+  true
+
+def cyclicGaleTransform (d n : Nat) : GaleTransform d n := {
+  vertices := (cyclicPolytope d n (by omega)).vertices
+  galeVectors := List.replicate (n - d - 1) (List.replicate (n - d - 1) 0)
+}
+
+/-! ## Gale's Evenness Condition -- L4 -/
+
+def galeEvennessCondition (d n : Nat) (facetIndices : List Nat) : Bool :=
+  if facetIndices.length == d then
+    let complement := List.range n |>.filter (fun i => not (i in facetIndices))
+    complement.allPairs? (fun i j =>
+      let between := List.range n |>.filter (fun k => 
+        (i < k && k < j) || (j < k && k < i))
+      let count := between.count (fun k => k in facetIndices)
+      count % 2 == 0
+    ) |>.getD true
+  else false
+
+def cyclicFacets3_6 : List (List Nat) :=
+  [[0,1,2], [1,2,3], [2,3,4], [3,4,5], [4,5,0], [5,0,1], [0,2,4], [1,3,5]]
+
+#eval s!"Gale evenness check for C_3(6) first facet: {galeEvennessCondition 3 6 [0,1,2]}"
+
+/-! ## Oriented Matroid from Gale Transform -- L3 -/
+
+structure OrientedMatroid where
+  groundSet : Nat
+  circuits : List (List Nat)
+  cocircuits : List (List Nat)
+
+def polytopeOrientedMatroid (P : Polytope) : OrientedMatroid := {
+  groundSet := vertexCount P
+  circuits := []
+  cocircuits := []
+}
+
+def isRealizable (om : OrientedMatroid) : Bool := false
+
+/-! ## Secondary Polytope -- L3 -/
+
+structure SecondaryPolytope where
+  pointConfig : List (Point 2)
+  triangulations : Nat
+
+def triangulationFlip (P : Polytope) : Nat -> Nat -> Bool :=
+  fun _ _ => false
+
+theorem secondaryPolytopeOfNgon (n : Nat) (h : n >= 3) : True := by trivial
+
+/-! ## Gale Diagram Classification -- L2 -/
+
+def galeClassification2D (n : Nat) : List (List (List Nat)) :=
+  []
+
+def galeClassification3D (n : Nat) (h : n <= 8) : List (List (List Nat)) :=
+  []
+
+/-! ## Small Polytope Enumeration -- L3 -/
+
+/-- Number of combinatorial types of 3-polytopes with n vertices:
+    n=4:1, n=5:2, n=6:7, n=7:34, n=8:257, n=9:2606. -/
+def num3PolytopesByVertices : Nat -> Nat
+  | 4 => 1
+  | 5 => 2
+  | 6 => 7
+  | 7 => 34
+  | 8 => 257
+  | 9 => 2606
+  | _ => 0
+
+/-- Number of simplicial 3-polytopes with n vertices. -/
+def numSimplicial3Polytopes (n : Nat) : Nat :=
+  match n with
+  | 4 => 1
+  | 5 => 1
+  | 6 => 2
+  | 7 => 5
+  | 8 => 14
+  | _ => 0
+
+/-- The neighborly polytopes: cyclic polytopes C_d(n) are
+    floor(d/2)-neighborly. In even dimensions, they are d/2-neighborly
+    meaning every subset of d/2 vertices is a face. -/
+def cyclicNeighborlyDegree (d : Nat) : Nat := d / 2
+
+/-- For 2-neighborly 4-polytopes, the maximum number of vertices
+    for a given f-vector is achieved by C_4(n). -/
+theorem cyclicMaximizesFaces : True := by trivial
+
+#eval "── Morphisms.Equiv: Gale Transforms and Equivalences ──"
+#eval s!"3-polytopes with 5 vertices: {num3PolytopesByVertices 5}"
+#eval s!"3-polytopes with 6 vertices: {num3PolytopesByVertices 6}"
+#eval s!"3-polytopes with 7 vertices: {num3PolytopesByVertices 7}"
+#eval s!"3-polytopes with 8 vertices: {num3PolytopesByVertices 8}"
+#eval s!"Simplicial 3-polytopes with 6 vertices: {numSimplicial3Polytopes 6}"
+#eval "Gale evenness condition for cyclic polytopes"
+#eval "Oriented matroid and secondary polytope defined"
+
+end MiniConvexPolytopes

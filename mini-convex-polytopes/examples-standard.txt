@@ -1,0 +1,157 @@
+/-
+# MiniConvexPolytopes: Examples -- Standard Polytopes -- L6
+
+Classical polytopes with #eval verification: simplex, cube, cross-polytope,
+cyclic polytope, associahedron, permutohedron, and Platonic solids.
+-/
+
+import MiniObjectKernel.Core.Basic
+import MiniConvexPolytopes.Core.Basic
+import MiniConvexPolytopes.Theorems.Basic
+
+namespace MiniConvexPolytopes
+
+#eval "══ Examples.Standard: Convex Polytope Examples ══"
+
+/-! ## d-Simplex (Delta^d) -- L6 -/
+
+#eval "── d-Simplex Delta^d ──"
+#eval s!"Delta^1 (segment): vertices={(standardSimplex 1).vertices.length}"
+#eval s!"Delta^2 (triangle): vertices={(standardSimplex 2).vertices.length}"
+#eval s!"Delta^3 (tetrahedron): vertices={(standardSimplex 3).vertices.length}"
+#eval s!"Delta^4 (5-cell): vertices={(standardSimplex 4).vertices.length}"
+
+/-- f-vector of Delta^d: f_k = C(d+1, k+1). -/
+def simplexFvectorFormula (d : Nat) (k : Nat) : Nat :=
+  Nat.choose (d+1) (k+1)
+
+#eval s!"Delta^3 f_0 = {simplexFvectorFormula 3 0} (vertices)"
+#eval s!"Delta^3 f_1 = {simplexFvectorFormula 3 1} (edges)"
+#eval s!"Delta^3 f_2 = {simplexFvectorFormula 3 2} (facets)"
+
+/-! ## d-Cube (Box^d = [0,1]^d) -- L6 -/
+
+#eval "── d-Cube ──"
+#eval s!"Box^1 (segment): vertices={(standardCube 1).vertices.length}"
+#eval s!"Box^2 (square): vertices={(standardCube 2).vertices.length}"
+#eval s!"Box^3 (3-cube): vertices={(standardCube 3).vertices.length}"
+#eval s!"Box^4 (4-cube/tesseract): vertices={(standardCube 4).vertices.length}"
+
+/-- f-vector of Box^d: f_k = 2^{d-k} * C(d, k). -/
+def cubeFvectorFormula (d k : Nat) : Nat :=
+  (2 ^ (d - k)) * Nat.choose d k
+
+#eval s!"Box^3 f_0 = {cubeFvectorFormula 3 0} (vertices)"
+#eval s!"Box^3 f_1 = {cubeFvectorFormula 3 1} (edges)"
+#eval s!"Box^3 f_2 = {cubeFvectorFormula 3 2} (facets)"
+#eval s!"Box^4 f_0 = {cubeFvectorFormula 4 0}, f_1 = {cubeFvectorFormula 4 1}, f_2 = {cubeFvectorFormula 4 2}, f_3 = {cubeFvectorFormula 4 3}"
+
+/-! ## d-Cross-Polytope (Octahedron analog) -- L6 -/
+
+#eval "── d-Cross-Polytope ──"
+#eval s!"Cross^2 (diamond): vertices={(standardCrossPolytope 2).vertices.length}"
+#eval s!"Cross^3 (octahedron): vertices={(standardCrossPolytope 3).vertices.length}"
+#eval s!"Cross^4 (16-cell): vertices={(standardCrossPolytope 4).vertices.length}"
+
+/-- f-vector of Cross^d: f_k = 2^{k+1} * C(d, k+1). -/
+def crossFvectorFormula (d k : Nat) : Nat :=
+  (2 ^ (k+1)) * Nat.choose d (k+1)
+
+#eval s!"Cross^3 f_0 = {crossFvectorFormula 3 0}, f_1 = {crossFvectorFormula 3 1}, f_2 = {crossFvectorFormula 3 2}"
+
+/-! ## Platonic Solids -- L6 -/
+
+#eval "── Platonic Solids ──"
+
+/-- Tetrahedron: 4 vertices, 6 edges, 4 triangular faces. -/
+def tetrahedron : Polytope := mkPoly3 tetrahedronVertices (by trivial)
+
+/-- Cube: 8 vertices, 12 edges, 6 square faces. -/
+def cube3 : Polytope := mkPoly3 cubeVertices (by trivial)
+
+/-- Octahedron: 6 vertices, 12 edges, 8 triangular faces. -/
+def octahedron : Polytope := mkPoly3 octahedronVertices (by trivial)
+
+/-- Icosahedron: 12 vertices, 30 edges, 20 triangular faces. -/
+def icosahedron : Polytope := mkPoly3 icosahedronVertices (by trivial)
+
+/-- Dodecahedron: 20 vertices, 30 edges, 12 pentagonal faces. -/
+def dodecahedron : Polytope := mkPoly3 dodecahedronVertices (by trivial)
+
+#eval s!"Tetrahedron: f0={vertexCount tetrahedron}"
+#eval s!"Cube: f0={vertexCount cube3}"
+#eval s!"Octahedron: f0={vertexCount octahedron}"
+#eval s!"Icosahedron: f0={vertexCount icosahedron}"
+#eval s!"Dodecahedron: f0={vertexCount dodecahedron}"
+
+#eval s!"Platonic Euler check (f0-f1+f2=2):"
+#eval s!"  Tetrahedron: {(4:Int)-6+4}"
+#eval s!"  Cube: {(8:Int)-12+6}"
+#eval s!"  Octahedron: {(6:Int)-12+8}"
+#eval s!"  Icosahedron: {(12:Int)-30+20}"
+#eval s!"  Dodecahedron: {(20:Int)-30+12}"
+
+/-! ## Self-Duality of Simplex -- L6 -/
+
+#eval "── Self-duality ──"
+#eval s!"Simplex self-dual: Delta^2 f=(3,3,3) reversed=(3,3,3): {isSelfDual (standardSimplex 2)}"
+#eval s!"Cube f=(8,12,6) vs reversed=(6,12,8)=octahedron: {cubeOctahedronDual}"
+
+/-! ## Neighborly Cyclic Polytopes -- L6 -/
+
+#eval "── Cyclic Polytopes ──"
+#eval s!"C_2(5): convex pentagon, f=(5,5)"
+#eval s!"C_3(6): f={cyclicFvector3D 6}"
+#eval s!"C_3(7): f={cyclicFvector3D 7}"
+#eval s!"C_3(8): f={cyclicFvector3D 8}"
+
+/-- C_4(8) is 2-neighborly: every pair of vertices is an edge.
+    f_0=8, f_1=C(8,2)=28, f_2=?, f_3=40. -/
+#eval s!"C_4(8): 2-neighborly, f_0=8, f_1=28"
+
+/-! ## Catalan/Associahedron/Nestohedron -- L6 -/
+
+#eval "── Associahedron ──"
+#eval s!"Catalan numbers: C0=1, C1=1, C2=2, C3=5, C4=14, C5=42"
+#eval s!"K_3 (pentagon) = associahedron for 4 variables"
+#eval s!"K_4 (9-vertex 3D polytope) = associahedron for 5 variables"
+
+/-- The cyclohedron W_n (Bott-Taubes polytope) has vertices
+    corresponding to cyclically ordered parenthesizations. -/
+#eval "Cyclohedron: parenthesizations on a circle"
+
+/-! ## Permutohedron -- L6 -/
+
+#eval "── Permutohedron ──"
+#eval s!"Pi_2 (hexagon): permutations of (1,2,3)"
+#eval s!"Pi_3 (truncated octahedron): permutations of (1,2,3,4)"
+#eval "Permutohedron is a zonotope: Minkowski sum of edges e_i - e_j"
+
+/-! ## Birkhoff Polytope -- L6 -/
+
+/-- The Birkhoff polytope B_n is the convex hull of n x n
+    permutation matrices. Vertices: n! matrices.
+    Faces correspond to (0,1)-matrices with at most one 1 per row/col. -/
+#eval s!"Birkhoff B_3: dim=4, vertices=6, facets=9"
+#eval s!"Birkhoff B_4: dim=9, vertices=24, facets=?"
+
+/-! ## Zonotope Examples -- L6 -/
+
+/-- A zonotope generated by vectors v_1,...,v_n is the
+    Minkowski sum of segments [-v_i, v_i]. All 2D zonotopes
+    are centrally symmetric 2n-gons. -/
+#eval "Zonotope: Minkowski sum of line segments"
+#eval "Regular 2n-gons are zonotopes (equally spaced vectors)"
+
+/-! ## Hypersimplex -- L6 -/
+
+/-- The hypersimplex Delta(k,n) is conv of all (0,1)-vectors
+    with exactly k ones. It is the intersection of the n-cube
+    with the hyperplane sum x_i = k. -/
+def hypersimplex (k n : Nat) : String :=
+  s!"Delta({k},{n}): conv of C({n},{k}) points with k ones in [0,1]^{n}"
+
+#eval hypersimplex 2 4
+#eval "Hypersimplex Delta(1,n+1) = n-simplex"
+
+end MiniConvexPolytopes

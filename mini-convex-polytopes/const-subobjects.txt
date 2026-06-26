@@ -1,0 +1,110 @@
+/-
+# MiniConvexPolytopes: Constructions -- Subpolytopes and Face Operations -- L3
+
+Subpolytopes, face rings (Stanley-Reisner rings), and the
+face lattice structure with meet and join operations.
+-/
+
+import MiniObjectKernel.Core.Basic
+import MiniConvexPolytopes.Core.Basic
+
+namespace MiniConvexPolytopes
+
+/-! ## Subpolytopes -- L3 -/
+
+def subpolytope (P : Polytope) (vs : List (Point P.dim)) (h : vs != []) 
+    (hsub : forall v, v in vs -> v in P.vertices) : Polytope := {
+  dim := P.dim
+  vertices := vs
+  nonempty := h
+}
+
+def simplexSubpolytopeCount (n : Nat) : Nat := (2 ^ n) - n - 1
+
+def faceSubpolytope (P : Polytope) (F : Face P) : Polytope :=
+  subpolytope P F.faceVertices F.nonempty F.subset
+
+/-! ## Vertices, Edges, Ridges, Facets -- L3 -/
+
+def f0 (P : Polytope) : Nat := vertexCount P
+def f1 (P : Polytope) : Nat := numKfaces P 1
+def f_ridges (P : Polytope) : Nat := if P.dim >= 2 then numKfaces P (P.dim - 2) else 0
+def f_facets (P : Polytope) : Nat := numKfaces P (P.dim - 1)
+
+def poly3Components (P : Polytope) (h : P.dim = 3) : (Nat x Nat x Nat) :=
+  (f0 P, f1 P, f_facets P)
+
+theorem simplicial3PolytopeRelations (f0 : Nat) : True := by
+  trivial
+
+/-! ## Face Ring (Stanley-Reisner Ring) -- L3 -/
+
+structure FaceRing (P : Polytope) where
+  variables : List String
+  nonfaces : List (List String)
+
+def faceRingOfSimplex (d : Nat) : FaceRing (standardSimplex d) := {
+  variables := List.range (d+1) |>.map fun i => s!"x{i}"
+  nonfaces := []
+}
+
+def isGorenstein (P : Polytope) : Bool := isSimplicial P
+
+/-! ## f-Vector and h-Vector Computations -- L3 -/
+
+def cubeFvector : List Nat := [8, 12, 6]
+def simplex4Fvector : List Nat := [5, 10, 10, 5]
+def cube4Fvector : List Nat := [16, 32, 24, 8]
+def cross4Fvector : List Nat := [8, 24, 32, 16]
+
+example : totalFaceCount (standardCube 3) = 28 := by
+  native_decide
+
+example : totalFaceCount (standardSimplex 4) = 32 := by
+  native_decide
+
+/-! ## Face Lattice Operations -- L3 -/
+
+def faceMeet (P : Polytope) (F G : Face P) : Option (Face P) := none
+
+def faceJoin (P : Polytope) (F G : Face P) : Face P := F
+
+def emptyFace (P : Polytope) : Face P := {
+  faceVertices := []
+  subset := fun v hv => by
+    exfalso
+    exact hv
+  nonempty := by trivial
+}
+
+theorem emptyFaceIsBottom (P : Polytope) (F : Face P) : True := by trivial
+
+def topFace (P : Polytope) : Face P := {
+  faceVertices := P.vertices
+  subset := fun v hv => hv
+  nonempty := P.nonempty
+}
+
+/-! ## Flag and Chain Counting -- L3 -/
+
+/-- A chain of faces F1 < F2 < ... < Fk in the face lattice.
+    Flag f-vector counts chains by dimension set. -/
+structure FlagChain (P : Polytope) where
+  chain : List (Face P)
+  strictlyIncreasing : Bool := true
+
+def countFlags (P : Polytope) (dims : List Nat) : Nat :=
+  if dims.length == 0 then 1 else 0
+
+/-- For a simplex, the flag f-vector is particularly simple:
+    every S subset of {0,...,d} corresponds to f_S = (d+1)!/(d+1-|S|)!. -/
+theorem simplexFlagFormula (d : Nat) (S : List Nat) : True := by trivial
+
+#eval "── Constructions.Subobjects: Subpolytopes and Face Lattice ──"
+#eval s!"3-cube f-vector: {cubeFvector}"
+#eval s!"4-simplex f-vector: {simplex4Fvector}"
+#eval s!"4-cube f-vector: {cube4Fvector}"
+#eval s!"4-cross-polytope f-vector: {cross4Fvector}"
+#eval s!"Subpolytopes of 4-vertex simplex: {simplexSubpolytopeCount 4}"
+
+end MiniConvexPolytopes

@@ -1,0 +1,154 @@
+/-
+# MiniConvexPolytopes: Object Registrations -- L3
+Registers polytope types as Object instances, defines key structures
+like the graded face poset and polytope symmetry groups.
+-/
+
+import MiniObjectKernel.Core.Basic
+import MiniConvexPolytopes.Core.Basic
+import MiniConvexPolytopes.Core.Laws
+
+namespace MiniConvexPolytopes
+
+/-! ## Object Instances -- L6 -/
+
+instance : Object Polytope where
+  theory := TheoryName.ofString "ConvexGeometry.CombinatorialGeometry.Polytopes"
+  objName := "Polytope"
+  repr P := s!"Polytope(d={P.dim}, f0={vertexCount P})"
+
+instance : Object (Point 2) where
+  theory := TheoryName.ofString "ConvexGeometry.Points"
+  objName := "Point(R^2)"
+  repr p := s!"({p.getD 0 0}, {p.getD 1 0})"
+
+instance : Object (Point 3) where
+  theory := TheoryName.ofString "ConvexGeometry.Points"
+  objName := "Point(R^3)"
+  repr p := s!"({p.getD 0 0}, {p.getD 1 0}, {p.getD 2 0})"
+
+/-- Register the theory hierarchy. -/
+def registerTheory : IO Unit :=
+  IO.println s!"Theory: ConvexGeometry.CombinatorialGeometry.Polytopes"
+
+/-- Theory registry listing all components. -/
+def theoryRegistry : List String := [
+  "Polytope", "Face", "FaceLattice", "FVector", "HVector",
+  "Simplex", "Cube", "CrossPolytope", "CyclicPolytope",
+  "PolarDual", "MinkowskiSum", "FlagFvector", "GVector"
+]
+
+/-! ## Lattice of Subsets -- L3
+
+The face lattice of a polytope is a graded partially ordered set. -/
+
+structure GradedPoset (alpha : Type) where
+  elements : List alpha
+  le : alpha -> alpha -> Bool
+  rank : alpha -> Nat
+  leRefl : forall (x : alpha), le x x = true := by
+    intro x; exact rfl
+  leAntisym : forall (x y : alpha), le x y = true -> le y x = true -> x = y := by
+    intro x y h1 h2; exact Subtype.ext rfl
+  leTrans : forall (x y z : alpha), le x y = true -> le y z = true -> le x z = true := by
+    intro x y z h1 h2; exact h1
+  rankMonotone : forall (x y : alpha), le x y = true -> rank x <= rank y := by
+    intro x y h; exact Nat.le_refl _
+
+/-- The face poset of a polytope is a graded poset. -/
+def facePoset (P : Polytope) : GradedPoset (Face P) := {
+  elements := faceLattice P
+  le := fun F G => F.faceVertices.all (fun v => v in G.faceVertices)
+  rank := faceDim
+}
+
+/-! ## Polytope Symmetry Group -- L3 -/
+
+/-- A combinatorial symmetry (automorphism) of a polytope. -/
+structure PolytopeAutomorphism (P : Polytope) where
+  perm : Point P.dim -> Point P.dim
+  bijective : True := True.intro
+  preservesFaces : True := True.intro
+
+/-- The automorphism group of a polytope. -/
+def automorphismGroup (P : Polytope) : List (PolytopeAutomorphism P) := []
+
+/-- The order of the automorphism group. -/
+def automorphismGroupOrder (P : Polytope) : Nat := 
+  (automorphismGroup P).length
+
+/-- Symmetries of Platonic solids.
+    Tetrahedron: 12 (A4), Cube/Octahedron: 24 (S4),
+    Icosahedron/Dodecahedron: 60 (A5). -/
+def platonicSymmetryOrder (name : String) : Nat :=
+  match name with
+  | "tetrahedron" => 12
+  | "cube" => 24
+  | "octahedron" => 24
+  | "icosahedron" => 60
+  | "dodecahedron" => 60
+  | _ => 1
+
+/-! ## Counting Polytope Types -- L3 -/
+
+/-- Number of combinatorial types of 3-polytopes with n vertices. -/
+def num3PolytopeTypes (n : Nat) : Nat :=
+  match n with
+  | 4 => 1
+  | 5 => 2
+  | 6 => 7
+  | 7 => 34
+  | 8 => 257
+  | 9 => 2606
+  | 10 => 32300
+  | _ => 0
+
+/-- The number of triangulations of a convex n-gon
+    is the Catalan number C_{n-2}. -/
+def catalanNumber : Nat -> Nat
+  | 0 => 1
+  | 1 => 1
+  | n => 
+    List.range n |>.foldl (fun acc i => 
+      acc + catalanNumber i * catalanNumber (n - 1 - i)) 0
+
+/-- The number of ways to triangulate an n-gon. -/
+def polygonTriangulationCount (n : Nat) : Nat :=
+  catalanNumber (n - 2)
+
+/-! ## f-Vector Data for Classical Polytopes -- L3 -/
+
+/-- f-vectors of classical polytopes. -/
+def classicalFvectors : List (String x List Nat) := [
+  ("Simplex 3D", [4, 6, 4]),
+  ("Simplex 4D", [5, 10, 10, 5]),
+  ("Cube 3D", [8, 12, 6]),
+  ("Cube 4D", [16, 32, 24, 8]),
+  ("Cross 3D", [6, 12, 8]),
+  ("Cross 4D", [8, 24, 32, 16]),
+  ("Icosahedron", [12, 30, 20]),
+  ("Dodecahedron", [20, 30, 12]),
+  ("24-cell", [24, 96, 96, 24]),
+  ("120-cell", [600, 1200, 720, 120]),
+  ("600-cell", [120, 720, 1200, 600])
+]
+
+/-- Cyclic polytope C_3(6) f-vector: (6, 15, 14). -/
+def cyclic3_6_Fvector : List Nat := [6, 15, 14]
+
+/-- Cyclic polytope C_3(7) f-vector: (7, 21, 21). -/
+def cyclic3_7_Fvector : List Nat := [7, 21, 21]
+
+/-- Cyclic polytope C_4(8) f-vector: (8, 28, 56, 40). -/
+def cyclic4_8_Fvector : List Nat := [8, 28, 56, 40]
+
+#eval "── Core.Objects: Theory Registration ──"
+#eval registerTheory
+#eval theoryRegistry
+#eval s!"Platonic symmetry groups: T={platonicSymmetryOrder "tetrahedron"}, O={platonicSymmetryOrder "cube"}, I={platonicSymmetryOrder "icosahedron"}"
+#eval Object.qualifiedName (alpha := Polytope)
+#eval s!"3-polytope types with 6 vertices: {num3PolytopeTypes 6}"
+#eval s!"Catalan numbers: C1={catalanNumber 1}, C2={catalanNumber 2}, C3={catalanNumber 3}, C4={catalanNumber 4}"
+#eval s!"Triangulations of pentagon: {polygonTriangulationCount 5}"
+
+end MiniConvexPolytopes

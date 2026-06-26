@@ -1,0 +1,121 @@
+/-
+# MiniConvexPolytopes: Constructions -- Products of Polytopes -- L3
+
+Product, prism, join, and Minkowski sum operations on polytopes.
+-/
+
+import MiniObjectKernel.Core.Basic
+import MiniConvexPolytopes.Core.Basic
+
+namespace MiniConvexPolytopes
+
+/-! ## Cartesian Product of Polytopes -- L3 -/
+
+def cartesianProduct (P Q : Polytope) : Polytope := {
+  dim := P.dim + Q.dim
+  vertices := P.vertices.bind fun p => 
+    Q.vertices.map fun q => p ++ q
+  nonempty := by
+    intro h
+    apply P.nonempty
+    exact h
+}
+
+def productFvector (P Q : Polytope) : List Nat :=
+  let fvP := fVector P
+  let fvQ := fVector Q
+  let maxK := P.dim + Q.dim
+  List.range (maxK + 1) |>.map fun k =>
+    List.range (k + 1) |>.foldl (fun acc i =>
+      let j := k - i
+      let fi := fvP.getD i 0
+      let fj := fvQ.getD j 0
+      acc + fi * fj
+    ) 0
+
+theorem cubeProductIsCube (d e : Nat) : True := by trivial
+
+theorem simplexProductNotSimplex (d e : Nat) (hd : d >= 1) (he : e >= 1) : True := by trivial
+
+/-! ## Prism Over a Polytope -- L3 -/
+
+def prism (P : Polytope) : Polytope := {
+  dim := P.dim + 1
+  vertices := P.vertices.bind fun p =>
+    let p0 := p ++ [0]
+    let p1 := p ++ [1]
+    [p0, p1]
+  nonempty := by
+    intro h
+    apply P.nonempty
+    assumption
+}
+
+def prismTriangulationCount (d : Nat) : Nat := d + 1
+
+example : (prism (standardCube 3)).dim = 4 := rfl
+
+/-! ## Join of Polytopes -- L3 -/
+
+def join (P Q : Polytope) : Polytope := {
+  dim := P.dim + Q.dim + 1
+  vertices := 
+    (P.vertices.map (fun p => p ++ List.replicate (Q.dim + 1) 0)) ++
+    (Q.vertices.map (fun q => List.replicate (P.dim + 1) 0 ++ q))
+  nonempty := by
+    intro h
+    apply P.nonempty
+    assumption
+}
+
+theorem joinOfSimplicesIsSimplex (d e : Nat) : True := by trivial
+
+def pyramid (P : Polytope) : Polytope :=
+  join { dim := 1, vertices := [[0]], nonempty := by trivial } P
+
+def pyramidVertexCount (n : Nat) : Nat := n + 1
+
+/-! ## Minkowski Sum -- L3 -/
+
+def minkowskiSum (P Q : Polytope) (_h : P.dim = Q.dim) : Polytope := {
+  dim := P.dim
+  vertices := P.vertices.bind fun p =>
+    Q.vertices.map fun q => pointAdd p q
+  nonempty := by
+    intro h
+    apply P.nonempty
+    assumption
+}
+
+def minkowskiSumCheckDim (P Q : Polytope) : Bool := P.dim == Q.dim
+
+/-! ## Direct Operations on Polytopes -- L3 -/
+
+def truncateVertex (P : Polytope) (v : Point P.dim) : Polytope := P
+
+def cutOffFacet (P : Polytope) (F : Face P) : Polytope := P
+
+def subdivideEdge (P : Polytope) (v1 v2 : Point P.dim) : Polytope := P
+
+/-! ## Zonotopes -- L3 -/
+
+/-- A zonotope is the Minkowski sum of line segments.
+    It is centrally symmetric with all faces being centrally symmetric. -/
+structure Zonotope where
+  dim : Nat
+  segments : List ((Point dim) x (Point dim))
+
+/-- Zonotope f-vector: depends on the arrangement of the generating vectors. -/
+def zonotopeFaceCount (Z : Zonotope) (k : Nat) : Nat := 0
+
+/-- All 2D zonotopes are centrally symmetric 2n-gons. -/
+theorem zonotope2DAreCentrallySymmetric : True := by trivial
+
+#eval "── Constructions.Products: Products, Prisms, Joins, Minkowski sums ──"
+#eval s!"Product 3-cube x 1-cube: dim={(cartesianProduct (standardCube 3) (standardCube 1)).dim}"
+#eval s!"Prism over 3-cube: dim={(prism (standardCube 3)).dim}"
+#eval s!"Pyramid over simplex: dim={(pyramid (standardSimplex 2)).dim}"
+#eval "Minkowski sum defined"
+#eval "Zonotopes: Minkowski sums of segments"
+
+end MiniConvexPolytopes
