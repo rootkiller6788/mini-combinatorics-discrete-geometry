@@ -150,7 +150,6 @@ structure ShellingOrder (P : PolytopeFaceLattice) where
   order : List (Fin P.faceCount)
   is_shelling : Bool
 
-example : True := by trivial
 
 /-! ## Stack Polytopes and Simplicial Polytopes -/
 
